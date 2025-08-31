@@ -1,0 +1,28 @@
+meta {
+  name: Upload Photo
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:9000/ezclaim-dev/8a9f93f4-06f3-4c04-b16a-6b08262b375c?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250831T140241Z&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Credential=ezclaim%2F20250831%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Expires=900&X-Amz-Signature=4f387fc2eddeaa9173e42514b9770675592633256ca8f418c05dec2ed84e2f8c
+  body: file
+  auth: inherit
+}
+
+params:query {
+  X-Amz-Algorithm: AWS4-HMAC-SHA256
+  X-Amz-Date: 20250831T140241Z
+  X-Amz-SignedHeaders: content-type%3Bhost
+  X-Amz-Credential: ezclaim%2F20250831%2Fus-east-1%2Fs3%2Faws4_request
+  X-Amz-Expires: 900
+  X-Amz-Signature: 4f387fc2eddeaa9173e42514b9770675592633256ca8f418c05dec2ed84e2f8c
+}
+
+body:file {
+  file: @file(/Users/liuzisen/Desktop/Screenshot 2025-08-31 at 16.51.22.png) @contentType(image/png)
+}
+
+settings {
+  encodeUrl: true
+}

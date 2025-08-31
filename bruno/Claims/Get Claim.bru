@@ -1,0 +1,17 @@
+meta {
+  name: Get Claim
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/claims/{{claimId}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should respond OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Update Claim
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/claims/{{claimId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "Updated Claim {{$randomInt}}",
+    "description": "Updated",
+    "status": "SUBMITTED",
+    "photoIds": ["{{photoId}}"],
+    "tagIds": ["{{tagId}}"]
+  }
+}
+
+tests {
+  test("should respond OK and be updated", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("SUBMITTED");
+  });
+}

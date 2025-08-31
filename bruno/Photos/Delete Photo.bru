@@ -1,0 +1,17 @@
+meta {
+  name: Delete Photo
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/photos/{{photoId}}?deleteObject=false
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should respond 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "type": "collection",
+  "name": "Ezclaim API",
+  "ignore": [
+    "node_modules",
+    ".git",
+    ".idea",
+    ".vscode"
+  ]
+}
+

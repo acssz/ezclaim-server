@@ -1,0 +1,17 @@
+meta {
+  name: Delete Claim
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/claims/{{claimId}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should respond 204", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Get Photo
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/photos/{{photoId}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should respond OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

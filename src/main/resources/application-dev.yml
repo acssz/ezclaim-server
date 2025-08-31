@@ -1,0 +1,16 @@
+spring:
+  data:
+    mongodb:
+      # Root user authenticates against the admin database
+      uri: mongodb://ezclaim:E2ClaimPass@localhost:27017/ezclaim?authSource=admin
+
+app:
+  objectstore:
+    # For local dev against S3-compatible (Compose MinIO)
+    endpoint: http://localhost:9000
+    region: us-east-1
+    access-key: ezclaim
+    secret-key: E2ClaimPass
+    bucket: ezclaim-dev
+    path-style: true
+    ensure-bucket: true

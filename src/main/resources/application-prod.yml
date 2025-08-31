@@ -1,0 +1,17 @@
+spring:
+  data:
+    mongodb:
+      # Provide as environment variable in deployment
+      uri: ${SPRING_DATA_MONGODB_URI}
+
+app:
+  objectstore:
+    # Leave endpoint unset for AWS S3; set to https://host:port for S3-compatible
+    endpoint: ${APP_OBJECTSTORE_ENDPOINT:}
+    region: ${APP_OBJECTSTORE_REGION:us-east-1}
+    access-key: ${APP_OBJECTSTORE_ACCESS_KEY:}
+    secret-key: ${APP_OBJECTSTORE_SECRET_KEY:}
+    bucket: ${APP_OBJECTSTORE_BUCKET}
+    path-style: ${APP_OBJECTSTORE_PATH_STYLE:false}
+    # Avoid provisioning buckets in production unless explicitly enabled
+    ensure-bucket: ${APP_OBJECTSTORE_ENSURE_BUCKET:false}

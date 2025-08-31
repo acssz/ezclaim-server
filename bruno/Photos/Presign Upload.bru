@@ -1,0 +1,32 @@
+meta {
+  name: Presign Upload
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/photos/presign-upload
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "contentType": "image/jpeg"
+  }
+}
+
+script:post-response {
+  const p = res.getBody()
+  bru.setVar("photoBucket", p.bucket)
+  bru.setVar("photoKey", p.key)
+  bru.setVar("photoUploadUrl", p.url)
+}
+
+tests {
+  test("should respond OK and include fields", function () {
+    expect(res.getStatus()).to.equal(200);
+    const p = res.getBody();
+    expect(!!p.bucket && !!p.key && !!p.url).to.be.true;
+  });
+}
