@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/api/photos/presign-upload
   body: json
-  auth: inherit
+  auth: none
 }
 
 body:json {
@@ -20,7 +20,7 @@ script:post-response {
   const p = res.getBody()
   bru.setVar("photoBucket", p.bucket)
   bru.setVar("photoKey", p.key)
-  bru.setVar("photoUploadUrl", p.url)
+  bru.setVar("photoUploadUrl", decodeURIComponent(p.url))
 }
 
 tests {

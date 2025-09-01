@@ -26,14 +26,33 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
     // Hard-coded credentials (demo only)
-    private static final String USERNAME = "admin";
-    private static final String PASSWORD = "ezclaim-password";
+    private static final String ADMIN_USER = "admin";
+    private static final String ADMIN_PASS = "ezclaim-password";
+    private static final String READER_USER = "reader";
+    private static final String READER_PASS = "reader-pass";
     private final JwtEncoder jwtEncoder;
     private final org.acssz.ezclaim.config.JwtProperties jwtProps;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
-        if (USERNAME.equals(req.getUsername()) && PASSWORD.equals(req.getPassword())) {
+        String scopes = null;
+        String subject = null;
+        if (ADMIN_USER.equals(req.getUsername()) && ADMIN_PASS.equals(req.getPassword())) {
+            subject = ADMIN_USER;
+            scopes = String.join(" ", new String[]{
+                    // read permissions
+                    Scope.AUDIT.name(), Scope.TAG_READ.name(), Scope.PHOTO_READ.name(), Scope.CLAIM_READ.name(),
+                    // elevated permissions
+                    Scope.CLAIM_WRITE.name(), Scope.TAG_WRITE.name(), Scope.PHOTO_DELETE.name(), Scope.PHOTO_WRITE.name()
+            });
+        } else if (READER_USER.equals(req.getUsername()) && READER_PASS.equals(req.getPassword())) {
+            subject = READER_USER;
+            scopes = String.join(" ", new String[]{
+                    Scope.AUDIT.name(), Scope.TAG_READ.name(), Scope.PHOTO_READ.name(), Scope.CLAIM_READ.name()
+            });
+        }
+
+        if (scopes != null) {
             Instant now = Instant.now();
             Instant exp = now.plus(jwtProps.getTtl());
 
@@ -41,9 +60,9 @@ public class AuthController {
                     .issuer("ezclaim")
                     .issuedAt(now)
                     .expiresAt(exp)
-                    .subject(USERNAME)
-                    // scope is a common claim for authorities; here a single AUDIT role
-                    .claim("scope", "AUDIT")
+                    .subject(subject)
+                    // scope is a common claim for authorities; space-delimited string
+                    .claim("scope", scopes)
                     .build();
 
             JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

@@ -86,6 +86,30 @@ Security notes
 - Dev secret and TTL are configured in `application-dev.yml` under `app.security.jwt.*`.
 - In prod, set `APP_JWT_SECRET` (and optionally `APP_JWT_TTL`). Plan for secret rotation and a shorter TTL.
 
+Built-in Users (in-memory)
+- Anonymous (no token):
+  - Can read claims: `GET /api/claims`, `GET /api/claims/{id}` (response includes related photos/tags).
+- `reader` / `reader-pass`:
+  - Scopes: `AUDIT`, `TAG_READ`, `PHOTO_READ`, `CLAIM_READ`
+  - Can: read audit events; read tags; read photos; read all claims.
+- `admin` / `ezclaim-password`:
+  - Scopes: all of reader plus `CLAIM_WRITE`, `TAG_WRITE`, `PHOTO_DELETE`, `PHOTO_WRITE`
+  - Can: update/create/delete claims; CRUD tags; delete photos; presign upload & create photo record.
+
+Endpoint Authorization Summary
+- Audit: `/api/audit-events/**` → requires `SCOPE_AUDIT`
+- Claims:
+  - `GET /api/claims` → `SCOPE_CLAIM_READ`
+  - `GET /api/claims/{id}` → public
+  - `POST/PUT/DELETE /api/claims[/id]` → `SCOPE_CLAIM_WRITE`
+- Tags:
+  - `GET /api/tags[/id]` → `SCOPE_TAG_READ`
+  - `POST/PUT/DELETE /api/tags[/id]` → `SCOPE_TAG_WRITE`
+- Photos:
+  - `GET /api/photos[/id]`, `GET /api/photos/{id}/download-url` → `SCOPE_PHOTO_READ`
+  - `DELETE /api/photos/{id}` → `SCOPE_PHOTO_DELETE`
+  - `POST /api/photos/presign-upload`, `POST /api/photos` → `SCOPE_PHOTO_WRITE`
+
 ## Bruno API Tests
 - Collection root: `bruno/`
 - Environments: `bruno/environments/dev.bru`, `bruno/environments/prod.bru` (uses `baseUrl`)

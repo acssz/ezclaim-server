@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -52,9 +53,35 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                    // Anyone can login
                     .requestMatchers("/api/auth/login").permitAll()
-                    .requestMatchers("/api/audit-events/**").authenticated()
-                    .anyRequest().permitAll()
+
+                    // Audit endpoints: require AUDIT scope
+                    .requestMatchers("/api/audit-events/**").hasAuthority(Scope.AUDIT.authority())
+
+                    // Claims: anonymous can read individual claim; list requires CLAIM_READ; writes require CLAIM_WRITE
+                    .requestMatchers(HttpMethod.GET, "/api/claims").hasAuthority(Scope.CLAIM_READ.authority())
+                    .requestMatchers(HttpMethod.GET, "/api/claims/*").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/claims").hasAuthority(Scope.CLAIM_WRITE.authority())
+                    .requestMatchers(HttpMethod.PUT, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
+                    .requestMatchers(HttpMethod.DELETE, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
+
+                    // Tags (labels): anonymous can read all tags; writes require TAG_WRITE
+                    .requestMatchers(HttpMethod.GET, "/api/tags", "/api/tags/*").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/tags").hasAuthority(Scope.TAG_WRITE.authority())
+                    .requestMatchers(HttpMethod.PUT, "/api/tags/*").hasAuthority(Scope.TAG_WRITE.authority())
+                    .requestMatchers(HttpMethod.DELETE, "/api/tags/*").hasAuthority(Scope.TAG_WRITE.authority())
+
+                    // Photos: anonymous can read/write individual photo; list requires PHOTO_READ; updates requires PHOTO_WRITE; deletions requires PHOTO_DELETE
+                    .requestMatchers(HttpMethod.GET, "/api/photos/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/photos/*/download-url").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/photos/presign-upload").permitAll() // FIXME: require registration
+                    .requestMatchers(HttpMethod.GET, "/api/photos").hasAuthority(Scope.PHOTO_READ.authority())
+                    .requestMatchers(HttpMethod.DELETE, "/api/photos/*").hasAuthority(Scope.PHOTO_DELETE.authority())
+                    .requestMatchers(HttpMethod.POST, "/api/photos").hasAuthority(Scope.PHOTO_WRITE.authority())
+
+                    // other endpoints (if any) default deny unless explicitly allowed
+                    .anyRequest().denyAll()
             )
             .httpBasic(b -> b.disable())
             .formLogin(form -> form.disable())
