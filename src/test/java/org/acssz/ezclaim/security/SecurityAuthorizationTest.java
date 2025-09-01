@@ -7,7 +7,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
@@ -40,6 +40,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @WebMvcTest(controllers = {
         ClaimController.class, TagController.class, PhotoController.class, AuditEventController.class
@@ -55,7 +56,7 @@ class SecurityAuthorizationTest {
 
     @BeforeEach
     void setupStubs() {
-        Claim c1 = Claim.builder().id("c1").title("t1").status(ClaimStatus.NEW)
+        Claim c1 = Claim.builder().id("c1").title("t1").status(ClaimStatus.SUBMITTED)
                 .createdAt(Instant.now()).updatedAt(Instant.now()).build();
         when(claimService.findById("c1")).thenReturn(c1);
         when(claimService.findAll()).thenReturn(List.of(c1));
@@ -126,23 +127,75 @@ class SecurityAuthorizationTest {
     }
 
     @Test
-    void claims_update_requires_write_scope() throws Exception {
-        when(claimService.update(eq("c1"), eq("new"), eq("nd"), eq(ClaimStatus.SUBMITTED), any(), any()))
-                .thenReturn(Claim.builder().id("c1").title("new").status(ClaimStatus.SUBMITTED)
-                        .createdAt(Instant.now()).updatedAt(Instant.now()).build());
+    void claims_patch_requires_write_scope_for_fields() throws Exception {
+        Claim existing = Claim.builder().id("c1").title("old").description("d")
+                .status(ClaimStatus.SUBMITTED).createdAt(Instant.now()).updatedAt(Instant.now()).build();
+        when(claimService.findById("c1")).thenReturn(existing);
 
-        // reader with only CLAIM_READ should be forbidden
-        mvc.perform(put("/api/claims/c1")
+        // reader with only CLAIM_READ should be forbidden to change title/description
+        org.springframework.security.access.AccessDeniedException denied = new org.springframework.security.access.AccessDeniedException("field update not allowed");
+        when(claimService.patch(eq("c1"), any(ClaimService.Patch.class), eq(false), eq(true)))
+                .thenThrow(denied);
+        mvc.perform(patch("/api/claims/c1")
                         .with(jwt().jwt(j -> j.claim("scope", "CLAIM_READ")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"new\",\"description\":\"nd\",\"status\":\"SUBMITTED\"}"))
+                        .content("{\"title\":\"new\",\"description\":\"nd\"}"))
                 .andExpect(status().isForbidden());
 
         // admin with CLAIM_WRITE allowed
-        mvc.perform(put("/api/claims/c1")
+        Claim patched = Claim.builder().id("c1").title("new").description("nd").status(ClaimStatus.SUBMITTED)
+                .createdAt(existing.getCreatedAt()).updatedAt(Instant.now()).build();
+        when(claimService.patch(eq("c1"), any(ClaimService.Patch.class), eq(true), eq(false)))
+                .thenReturn(patched);
+        mvc.perform(patch("/api/claims/c1")
                         .with(jwt().jwt(j -> j.claim("scope", "CLAIM_WRITE CLAIM_READ")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"new\",\"description\":\"nd\",\"status\":\"SUBMITTED\"}"))
+                        .content("{\"title\":\"new\",\"description\":\"nd\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_admin_status_transition_allowed() throws Exception {
+        Claim existing = Claim.builder().id("c1").title("t").status(ClaimStatus.SUBMITTED)
+                .createdAt(Instant.now()).updatedAt(Instant.now()).build();
+        when(claimService.findById("c1")).thenReturn(existing);
+        Claim updated = Claim.builder().id("c1").title("t").status(ClaimStatus.APPROVED)
+                .createdAt(existing.getCreatedAt()).updatedAt(Instant.now()).build();
+        when(claimService.patch(eq("c1"), any(ClaimService.Patch.class), eq(true), eq(false)))
+                .thenReturn(updated);
+
+        mvc.perform(patch("/api/claims/c1")
+                        .with(jwt().jwt(j -> j.claim("scope", "CLAIM_WRITE")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"APPROVED\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void patch_anonymous_requires_password_for_protected_status_change() throws Exception {
+        var encoder = new BCryptPasswordEncoder();
+        Claim protectedClaim = Claim.builder().id("cx").title("t").status(ClaimStatus.SUBMITTED)
+                .passwordHash(encoder.encode("secret")).createdAt(Instant.now()).updatedAt(Instant.now()).build();
+        when(claimService.findById("cx")).thenReturn(protectedClaim);
+        Claim withdrawn = Claim.builder().id("cx").title("t").status(ClaimStatus.WITHDRAW)
+                .createdAt(protectedClaim.getCreatedAt()).updatedAt(Instant.now()).build();
+        // missing/invalid password -> service denies
+        when(claimService.patch(eq("cx"), any(ClaimService.Patch.class), eq(false), eq(false)))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("denied"));
+        when(claimService.patch(eq("cx"), any(ClaimService.Patch.class), eq(false), eq(true)))
+                .thenReturn(withdrawn);
+
+        // missing/invalid password -> 403
+        mvc.perform(patch("/api/claims/cx").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"WITHDRAW\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(patch("/api/claims/cx").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"WITHDRAW\",\"password\":\"bad\"}"))
+                .andExpect(status().isForbidden());
+
+        // correct password -> 200
+        mvc.perform(patch("/api/claims/cx").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"WITHDRAW\",\"password\":\"secret\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -152,6 +205,7 @@ class SecurityAuthorizationTest {
         @Bean TagService tagService() { return Mockito.mock(TagService.class); }
         @Bean PhotoService photoService() { return Mockito.mock(PhotoService.class); }
         @Bean AuditEventService auditEventService() { return Mockito.mock(AuditEventService.class); }
+        @Bean org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() { return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(); }
     }
 
     @TestConfiguration
@@ -163,5 +217,26 @@ class SecurityAuthorizationTest {
                 .authorizeHttpRequests(SecurityRules::apply);
             return http.build();
         }
+    }
+
+    @Test
+    void anonymous_must_provide_password_when_protected() throws Exception {
+        var encoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        Claim protectedClaim = Claim.builder().id("cx").title("t").status(ClaimStatus.SUBMITTED)
+                .createdAt(Instant.now()).updatedAt(Instant.now()).passwordHash(encoder.encode("secret")).build();
+        when(claimService.findById("cx")).thenReturn(protectedClaim);
+
+        // Missing/invalid password → 403
+        mvc.perform(get("/api/claims/cx")).andExpect(status().isForbidden());
+        mvc.perform(get("/api/claims/cx").param("password", "bad"))
+                .andExpect(status().isForbidden());
+
+        // Correct password → 200
+        mvc.perform(get("/api/claims/cx").param("password", "secret"))
+                .andExpect(status().isOk());
+
+        // Reader token bypasses password
+        mvc.perform(get("/api/claims/cx").with(jwt().jwt(j -> j.claim("scope", "CLAIM_READ"))))
+                .andExpect(status().isOk());
     }
 }

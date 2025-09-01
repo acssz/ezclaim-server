@@ -1,10 +1,10 @@
 meta {
-  name: Update Claim
+  name: Patch Claim
   type: http
   seq: 3
 }
 
-put {
+patch {
   url: {{baseUrl}}/api/claims/{{claimId}}
   body: json
   auth: inherit
@@ -13,16 +13,12 @@ put {
 body:json {
   {
     "title": "Updated Claim {{$randomInt}}",
-    "description": "Updated",
-    "status": "SUBMITTED",
-    "photoIds": ["{{photoId}}"],
-    "tagIds": ["{{tagId}}"]
+    "description": "Updated"
   }
 }
 
 tests {
   test("should respond OK and be updated", function () {
     expect(res.getStatus()).to.equal(200);
-    expect(res.getBody().status).to.equal("SUBMITTED");
   });
 }

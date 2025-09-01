@@ -1,10 +1,12 @@
 package org.acssz.ezclaim.domain;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
@@ -29,6 +31,23 @@ public class Claim {
     private Instant createdAt;
     private Instant updatedAt;
 
+    // Amount and currency (defaults to CHF)
+    private BigDecimal amount;
+    private Currency currency;
+
+    // Payout info (structured, optional)
+    private PayoutInfo payout;
+
+    // Recipient display name
+    private String recipient;
+
+    // Optional password hash protecting anonymous access
+    @Field("passwordHash")
+    private String passwordHash;
+
+    // When the expense occurred
+    private Instant expenseAt;
+
     // Reference photos and tags stored in their own collections
     @DocumentReference(lazy = true)
     private List<Photo> photos;
@@ -36,3 +55,4 @@ public class Claim {
     @DocumentReference(lazy = true)
     private List<Tag> tags;
 }
+

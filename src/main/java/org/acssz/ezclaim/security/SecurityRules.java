@@ -16,7 +16,10 @@ public final class SecurityRules {
             // Claims: list requires CLAIM_READ; single get is public; writes require CLAIM_WRITE
             .requestMatchers(HttpMethod.GET, "/api/claims").hasAuthority(Scope.CLAIM_READ.authority())
             .requestMatchers(HttpMethod.GET, "/api/claims/*").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/claims").hasAuthority(Scope.CLAIM_WRITE.authority())
+            // Anonymous can create claims
+            .requestMatchers(HttpMethod.POST, "/api/claims").permitAll()
+            // PATCH is permitted for anonymous, but controller enforces password/role checks for allowed fields and transitions
+            .requestMatchers(HttpMethod.PATCH, "/api/claims/*").permitAll()
             .requestMatchers(HttpMethod.PUT, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
             .requestMatchers(HttpMethod.DELETE, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
 

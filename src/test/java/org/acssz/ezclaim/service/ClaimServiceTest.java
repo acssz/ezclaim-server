@@ -52,12 +52,17 @@ class ClaimServiceTest {
             return c;
         });
 
-        Claim saved = claimService.create("title", "desc", ClaimStatus.NEW, List.of("p1"), List.of("t1"));
+        Claim saved = claimService.create(
+                "title", "desc", ClaimStatus.SUBMITTED,
+                List.of("p1"), List.of("t1"),
+                null, null, null, null,
+                null, null,
+                null);
 
         assertThat(saved.getId()).isEqualTo("c1");
         assertThat(saved.getPhotos()).extracting(Photo::getId).containsExactly("p1");
         assertThat(saved.getTags()).extracting(Tag::getId).containsExactly("t1");
-        assertThat(saved.getStatus()).isEqualTo(ClaimStatus.NEW);
+        assertThat(saved.getStatus()).isEqualTo(ClaimStatus.SUBMITTED);
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
     }
@@ -65,7 +70,12 @@ class ClaimServiceTest {
     @Test
     void create_claim_missing_photo_throws() {
         when(photoRepository.findAllById(List.of("missing"))).thenReturn(List.of());
-        assertThatThrownBy(() -> claimService.create("t", null, ClaimStatus.NEW, List.of("missing"), null))
+        assertThatThrownBy(() -> claimService.create(
+                "t", null, ClaimStatus.SUBMITTED,
+                List.of("missing"), null,
+                null, null, null, null,
+                null, null,
+                null))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("photo id(s)");
     }
@@ -73,7 +83,7 @@ class ClaimServiceTest {
     @Test
     void update_claim_updates_fields() {
         Claim existing = Claim.builder().id("c1").title("old").description("d")
-                .status(ClaimStatus.NEW).createdAt(Instant.now()).updatedAt(Instant.now()).build();
+                .status(ClaimStatus.SUBMITTED).createdAt(Instant.now()).updatedAt(Instant.now()).build();
         when(claimRepository.findById("c1")).thenReturn(Optional.of(existing));
         when(claimRepository.save(any(Claim.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -85,7 +95,7 @@ class ClaimServiceTest {
 
     @Test
     void delete_claim_deletes_from_repo() {
-        Claim existing = Claim.builder().id("c1").title("old").status(ClaimStatus.NEW).build();
+        Claim existing = Claim.builder().id("c1").title("old").status(ClaimStatus.SUBMITTED).build();
         when(claimRepository.findById("c1")).thenReturn(Optional.of(existing));
 
         claimService.delete("c1");
