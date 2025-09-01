@@ -70,11 +70,16 @@ Key Endpoints (REST)
    - `GET /api/audit-events` (filters: `entityType`, `entityId`, `action`, `from`, `to`; paging `page`, `size`; sorting `sort=field,asc|desc`)
    - `GET /api/audit-events/{id}`
 
+Auth (for Audit Events)
+- `POST /api/auth/login` with JSON `{ "username": "admin", "password": "ezclaim-password" }`
+- Returns `{ token, tokenType: "Bearer", expiresAt }`
+- Include header `Authorization: Bearer <token>` for all `/api/audit-events/**` requests.
+
 ## Bruno API Tests
 - Collection root: `bruno/`
 - Environments: `bruno/environments/dev.bru`, `bruno/environments/prod.bru` (uses `baseUrl`)
 - Requests grouped in `bruno/Tags`, `bruno/Photos`, `bruno/Claims`, `bruno/Audit Events`
-- Open the `bruno/` folder in Bruno, choose an environment, then run tests in order (Tags → Photos → Claims → Audit Events). The Audit Events folder includes list, filter example (with default variables), and get-by-id. The list/filter scripts capture the first event id to `{{auditEventId}}` for convenience.
+- Open the `bruno/` folder in Bruno, choose an environment, then run tests in order (Auth → Tags → Photos → Claims → Audit Events). The Audit Events folder includes list, paginated list, filter example (with default variables), and get-by-id. The list/filter scripts capture the first event id to `{{auditEventId}}` for convenience.
 
 ## Build & Test
 - Unit tests: `./mvnw test`
