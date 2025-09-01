@@ -52,37 +52,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                    // Anyone can login
-                    .requestMatchers("/api/auth/login").permitAll()
-
-                    // Audit endpoints: require AUDIT scope
-                    .requestMatchers("/api/audit-events/**").hasAuthority(Scope.AUDIT.authority())
-
-                    // Claims: anonymous can read individual claim; list requires CLAIM_READ; writes require CLAIM_WRITE
-                    .requestMatchers(HttpMethod.GET, "/api/claims").hasAuthority(Scope.CLAIM_READ.authority())
-                    .requestMatchers(HttpMethod.GET, "/api/claims/*").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/claims").hasAuthority(Scope.CLAIM_WRITE.authority())
-                    .requestMatchers(HttpMethod.PUT, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
-                    .requestMatchers(HttpMethod.DELETE, "/api/claims/*").hasAuthority(Scope.CLAIM_WRITE.authority())
-
-                    // Tags (labels): anonymous can read all tags; writes require TAG_WRITE
-                    .requestMatchers(HttpMethod.GET, "/api/tags", "/api/tags/*").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/tags").hasAuthority(Scope.TAG_WRITE.authority())
-                    .requestMatchers(HttpMethod.PUT, "/api/tags/*").hasAuthority(Scope.TAG_WRITE.authority())
-                    .requestMatchers(HttpMethod.DELETE, "/api/tags/*").hasAuthority(Scope.TAG_WRITE.authority())
-
-                    // Photos: anonymous can read/write individual photo; list requires PHOTO_READ; updates requires PHOTO_WRITE; deletions requires PHOTO_DELETE
-                    .requestMatchers(HttpMethod.GET, "/api/photos/*").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/photos/*/download-url").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/photos/presign-upload").permitAll() // FIXME: require registration
-                    .requestMatchers(HttpMethod.GET, "/api/photos").hasAuthority(Scope.PHOTO_READ.authority())
-                    .requestMatchers(HttpMethod.DELETE, "/api/photos/*").hasAuthority(Scope.PHOTO_DELETE.authority())
-                    .requestMatchers(HttpMethod.POST, "/api/photos").hasAuthority(Scope.PHOTO_WRITE.authority())
-
-                    // other endpoints (if any) default deny unless explicitly allowed
-                    .anyRequest().denyAll()
-            )
+            .authorizeHttpRequests(SecurityRules::apply)
             .httpBasic(b -> b.disable())
             .formLogin(form -> form.disable())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))

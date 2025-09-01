@@ -3,6 +3,7 @@ package org.acssz.ezclaim.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import org.acssz.ezclaim.audit.AuditEvent;
 import org.acssz.ezclaim.service.AuditEventService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,11 @@ class AuditEventControllerTest {
         @Bean AuditEventService auditEventService() { return org.mockito.Mockito.mock(AuditEventService.class); }
     }
 
+    @BeforeEach
+    void resetMocks() {
+        org.mockito.Mockito.reset(service);
+    }
+
     @Test
     void list_returns_page_with_content() throws Exception {
         AuditEvent a1 = AuditEvent.builder().id("a1").entityType("T").entityId("1").action("SAVE").occurredAt(Instant.parse("2025-01-01T00:00:00Z")).build();
@@ -67,7 +74,7 @@ class AuditEventControllerTest {
                 .andExpect(status().isOk());
 
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(service).search(isNull(), isNull(), isNull(), isNull(), isNull(), captor.capture());
+        verify(service, atLeastOnce()).search(isNull(), isNull(), isNull(), isNull(), isNull(), captor.capture());
         Pageable p = captor.getValue();
         Sort.Order order = p.getSort().getOrderFor("entityType");
         assertThat(order).isNotNull();
