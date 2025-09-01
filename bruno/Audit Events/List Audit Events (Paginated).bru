@@ -1,0 +1,48 @@
+meta {
+  name: List Audit Events (Paginated)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/audit-events?page={{page}}&size={{size}}&sort=occurredAt,desc
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: {{page}}
+  size: {{size}}
+  sort: occurredAt,desc
+}
+
+script:pre-request {
+  if (!bru.getVar("page")) bru.setVar("page", "1");
+  if (!bru.getVar("size")) bru.setVar("size", "5");
+}
+
+script:post-response {
+  const b = res.getBody();
+  if (b && b.content && b.content.length > 0) {
+    bru.setVar("auditEventId", b.content[0].id);
+  }
+}
+
+tests {
+  test("should respond OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("should include page metadata and respect size/page", function () {
+    const b = res.getBody();
+    const size = parseInt(bru.getVar("size"), 10);
+    const page = parseInt(bru.getVar("page"), 10);
+    expect(b).to.have.property('size');
+    expect(b).to.have.property('number');
+    expect(b).to.have.property('content');
+    expect(b.size).to.equal(size);
+    expect(b.number).to.equal(page);
+    expect(Array.isArray(b.content)).to.be.true;
+    expect(b.content.length).to.be.at.most(size);
+  });
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Filter Audit Events
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/audit-events?entityType={{entityType}}&action={{action}}&from={{from}}&to={{to}}&sort=occurredAt,desc&size=10
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  // Provide sensible defaults if variables not set in environment
+  if (!bru.getVar("entityType")) bru.setVar("entityType", "org.acssz.ezclaim.domain.Claim");
+  if (!bru.getVar("action")) bru.setVar("action", "SAVE");
+  if (!bru.getVar("from")) bru.setVar("from", "2025-01-01T00:00:00Z");
+  if (!bru.getVar("to")) bru.setVar("to", "2025-12-31T23:59:59Z");
+}
+
+script:post-response {
+  const b = res.getBody();
+  if (b && b.content && b.content.length > 0) {
+    bru.setVar("auditEventId", b.content[0].id);
+  }
+}
+
+tests {
+  test("should respond OK with page fields", function () {
+    expect(res.getStatus()).to.equal(200);
+    const b = res.getBody();
+    expect(b).to.have.property('totalElements');
+    expect(b).to.have.property('content');
+  });
+}

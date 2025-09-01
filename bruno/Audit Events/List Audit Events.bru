@@ -1,0 +1,24 @@
+meta {
+  name: List Audit Events
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/audit-events
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const b = res.getBody();
+  if (b && b.content && b.content.length > 0) {
+    bru.setVar("auditEventId", b.content[0].id);
+  }
+}
+
+tests {
+  test("should respond OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
