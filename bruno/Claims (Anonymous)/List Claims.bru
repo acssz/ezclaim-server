@@ -1,0 +1,17 @@
+meta {
+  name: List Claims
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/claims
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should respond unauthorized", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

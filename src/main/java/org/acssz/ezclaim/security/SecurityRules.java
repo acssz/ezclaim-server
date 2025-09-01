@@ -33,9 +33,9 @@ public final class SecurityRules {
             .requestMatchers(HttpMethod.GET, "/api/photos/*").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/photos/*/download-url").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/photos/presign-upload").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/photos").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/photos").hasAuthority(Scope.PHOTO_READ.authority())
             .requestMatchers(HttpMethod.DELETE, "/api/photos/*").hasAuthority(Scope.PHOTO_DELETE.authority())
-            .requestMatchers(HttpMethod.POST, "/api/photos").hasAuthority(Scope.PHOTO_WRITE.authority())
 
             // Default deny
             .anyRequest().denyAll();

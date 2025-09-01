@@ -1,0 +1,21 @@
+meta {
+  name: Get Claim
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/claims/{{claimId}}?password={{claimPassword}}
+  body: none
+  auth: none
+}
+
+params:query {
+  password: {{claimPassword}}
+}
+
+tests {
+  test("should respond OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

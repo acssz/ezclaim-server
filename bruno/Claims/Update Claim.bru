@@ -7,6 +7,9 @@ meta {
 patch {
   url: {{baseUrl}}/api/claims/{{claimId}}
   body: json
+  headers: {
+    Authorization: Bearer {{token}}
+  }
   auth: inherit
 }
 

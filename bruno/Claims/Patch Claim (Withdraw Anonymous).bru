@@ -1,0 +1,25 @@
+meta {
+  name: Patch Claim (Withdraw Anonymous)
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/claims/{{claimId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "WITHDRAW",
+    "password": "{{claimPassword}}"
+  }
+}
+
+tests {
+  test("should respond OK when password matches", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+

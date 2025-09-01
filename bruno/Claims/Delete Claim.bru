@@ -7,6 +7,9 @@ meta {
 delete {
   url: {{baseUrl}}/api/claims/{{claimId}}
   body: none
+  headers: {
+    Authorization: Bearer {{token}}
+  }
   auth: inherit
 }
 

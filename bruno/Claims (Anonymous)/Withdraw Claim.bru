@@ -1,0 +1,24 @@
+meta {
+  name: Withdraw Claim
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/claims/{{claimId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "WITHDRAW",
+    "password": "{{claimPassword}}"
+  }
+}
+
+tests {
+  test("should respond OK when password matches", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

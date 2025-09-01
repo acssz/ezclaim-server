@@ -7,6 +7,9 @@ meta {
 get {
   url: {{baseUrl}}/api/claims
   body: none
+  headers: {
+    Authorization: Bearer {{token}}
+  }
   auth: inherit
 }
 

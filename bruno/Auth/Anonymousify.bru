@@ -1,0 +1,19 @@
+meta {
+  name: Anonymousify
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  bru.deleteVar("token")
+}
+
+settings {
+  encodeUrl: true
+}
