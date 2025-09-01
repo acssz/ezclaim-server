@@ -3,6 +3,29 @@ spring:
     mongodb:
       # Provide as environment variable in deployment
       uri: ${SPRING_DATA_MONGODB_URI}
+  cloud:
+    function:
+      scan:
+        enabled: false
+    stream:
+      defaultBinder: kafka
+      function:
+        definition: auditEvents
+      binders:
+        kafka:
+          type: kafka
+          environment:
+            spring:
+              kafka:
+                bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      bindings:
+        auditEvents-in-0:
+          destination: audit.events
+          group: ezclaim-audit
+          content-type: application/json
+        auditEvents-out-0:
+          destination: audit.events
+          content-type: application/json
 
 app:
   objectstore:

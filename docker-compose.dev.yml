@@ -35,6 +35,39 @@ services:
       timeout: 5s
       retries: 5
 
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: ezclaim-redpanda-dev
+    restart: unless-stopped
+    ports:
+      - "9092:9092"   # Kafka API
+      - "9644:9644"   # Admin API
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://127.0.0.1:9092
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://127.0.0.1:9644/v1/status/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
 volumes:
   mongo_data:
   minio_data:

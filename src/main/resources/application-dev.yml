@@ -3,6 +3,29 @@ spring:
     mongodb:
       # Root user authenticates against the admin database
       uri: mongodb://ezclaim:E2ClaimPass@localhost:27017/ezclaim?authSource=admin
+  cloud:
+    function:
+      scan:
+        enabled: false
+    stream:
+      defaultBinder: kafka
+      function:
+        definition: auditEvents
+      binders:
+        kafka:
+          type: kafka
+          environment:
+            spring:
+              kafka:
+                bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      bindings:
+        auditEvents-in-0:
+          destination: audit.events
+          group: ezclaim-audit
+          content-type: application/json
+        auditEvents-out-0:
+          destination: audit.events
+          content-type: application/json
 
 app:
   objectstore:

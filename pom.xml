@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>24</java.version>
 		<aws.sdk.version>2.25.61</aws.sdk.version>
+		<spring-cloud-stream.version>4.3.0</spring-cloud-stream.version>
+		<spring-cloud-function.version>4.3.0</spring-cloud-function.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -61,6 +63,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream</artifactId>
+			<version>${spring-cloud-stream.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-binder-kafka</artifactId>
+			<version>${spring-cloud-stream.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-function-context</artifactId>
+			<version>${spring-cloud-function.version}</version>
 		</dependency>
 	</dependencies>
 
