@@ -19,11 +19,17 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @RestController
 @RequestMapping("/api/auth")
 @Validated
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Authentication endpoints")
 public class AuthController {
     // Hard-coded credentials (demo only)
     private static final String ADMIN_USER = "admin";
@@ -34,6 +40,11 @@ public class AuthController {
     private final org.acssz.ezclaim.config.JwtProperties jwtProps;
 
     @PostMapping("/login")
+    @Operation(summary = "Login for demo users", description = "Returns a JWT token for demo credentials.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authenticated"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         String scopes = null;
         String subject = null;
@@ -78,8 +89,9 @@ public class AuthController {
     }
 
     @Data
+    @Schema(name = "LoginRequest")
     public static class LoginRequest {
-        @NotBlank private String username;
-        @NotBlank private String password;
+        @NotBlank @Schema(example = "admin") private String username;
+        @NotBlank @Schema(example = "ezclaim-password") private String password;
     }
 }

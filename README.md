@@ -25,6 +25,14 @@ Dev URLs
 - MinIO Console: `http://localhost:9001`
 - S3 endpoint: `http://localhost:9000`
 - Mongo: `mongodb://...` from `application-dev.yml`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+ - OpenAPI YAML: `http://localhost:8080/v3/api-docs.yaml`
+
+Generate static OpenAPI YAML
+- Start the app locally on port 8080, then run:
+  - `./mvnw -Popenapi -DskipTests springdoc-openapi:generate`
+- Output: `target/openapi.yaml`
 
 ## Configuration
 Spring profiles are used to separate dev and prod configuration:

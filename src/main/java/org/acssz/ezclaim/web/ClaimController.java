@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,23 +29,46 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @RestController
 @RequestMapping("/api/claims")
 @RequiredArgsConstructor
 @Validated
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Claims", description = "Operations on claims")
 public class ClaimController {
 
     private final ClaimService service;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping
+    @Operation(summary = "List claims", description = "Requires CLAIM_READ scope.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of claims returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+    })
+    @SecurityRequirement(name = "bearerAuth")
     public List<ClaimResponse> list() {
         return service.findAll().stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get claim by id", description = "Public access; if the claim is password-protected, provide password or use privileged token.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Claim returned"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized (if using token)", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Password required or invalid", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ClaimResponse get(@PathVariable String id,
+                             @Parameter(description = "Password for protected claim")
                              @RequestParam(required = false) String password,
                              Authentication auth) {
         Claim c = service.findById(id);
@@ -63,6 +85,11 @@ public class ClaimController {
     }
 
     @PostMapping
+    @Operation(summary = "Create claim", description = "Anonymous users may create claims.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Created"),
+            @ApiResponse(responseCode = "400", description = "Validation error")
+    })
     public ResponseEntity<ClaimResponse> create(@Valid @RequestBody ClaimRequest req) {
         Claim created = service.create(
                 req.getTitle(), req.getDescription(), req.getStatus(),
@@ -76,6 +103,13 @@ public class ClaimController {
     }
 
     @PatchMapping("/{id}")
+    @Operation(summary = "Patch claim", description = "Anonymous may update limited fields with password; privileged token required for other fields.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Updated"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized (if using token)", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Not allowed", content = @Content)
+    })
     public ClaimResponse patch(@PathVariable String id,
                                @RequestBody ClaimPatchRequest req,
                                Authentication auth) {
@@ -102,6 +136,14 @@ public class ClaimController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete claim", description = "Requires CLAIM_WRITE scope.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Deleted", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

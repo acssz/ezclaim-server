@@ -18,15 +18,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
 
 @RestController
 @RequestMapping("/api/audit-events")
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Audit Events", description = "Search and read audit events")
 public class AuditEventController {
     private final AuditEventService service;
 
     @GetMapping
+    @Operation(summary = "Search audit events", description = "Requires AUDIT scope")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+    })
+    @SecurityRequirement(name = "bearerAuth")
     public Page<AuditEventResponse> list(
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) String entityId,
@@ -45,6 +59,14 @@ public class AuditEventController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get audit event", description = "Requires AUDIT scope")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    @SecurityRequirement(name = "bearerAuth")
     public AuditEventResponse get(@PathVariable String id) {
         return toResponse(service.getById(id));
     }
@@ -68,4 +90,3 @@ public class AuditEventController {
                 .build();
     }
 }
-
