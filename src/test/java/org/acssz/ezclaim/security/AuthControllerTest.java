@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.acssz.ezclaim.config.JwtProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,10 +28,18 @@ class AuthControllerTest {
     @Autowired MockMvc mvc;
 
     @Autowired JwtEncoder jwtEncoder;
+    @Autowired JwtProperties jwtProps;
 
     @TestConfiguration
     static class JwtTestConfig {
         @Bean JwtEncoder jwtEncoder() { return org.mockito.Mockito.mock(JwtEncoder.class); }
+        @Bean JwtProperties jwtProperties() {
+            JwtProperties p = new JwtProperties();
+            p.setSecret("test-secret-32-bytes-minimum-1234567890");
+            p.setAlgorithm("HS256");
+            p.setTtl(java.time.Duration.ofHours(1));
+            return p;
+        }
     }
 
     @Test

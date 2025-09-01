@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.acssz.ezclaim.config.JwtProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -20,13 +22,18 @@ import org.springframework.security.web.SecurityFilterChain;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
-    private static final String SECRET = "ezclaim-standard-jwt-secret-32-bytes-minimum!!";
-
     @Bean
-    public SecretKey jwtSecretKey() {
-        return new SecretKeySpec(SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    public SecretKey jwtSecretKey(JwtProperties props) {
+        if (props.getSecret() == null || props.getSecret().isBlank()) {
+            throw new IllegalStateException("app.security.jwt.secret must be configured");
+        }
+        if (!"HS256".equalsIgnoreCase(props.getAlgorithm())) {
+            throw new IllegalStateException("Only HS256 is supported for JWT in this setup");
+        }
+        return new SecretKeySpec(props.getSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
     @Bean

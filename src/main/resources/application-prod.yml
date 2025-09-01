@@ -38,3 +38,9 @@ app:
     path-style: ${APP_OBJECTSTORE_PATH_STYLE:false}
     # Avoid provisioning buckets in production unless explicitly enabled
     ensure-bucket: ${APP_OBJECTSTORE_ENSURE_BUCKET:false}
+  security:
+    jwt:
+      # Provide secret via environment; only HS256 supported here
+      secret: ${APP_JWT_SECRET}
+      algorithm: ${APP_JWT_ALG:HS256}
+      ttl: ${APP_JWT_TTL:PT12H}

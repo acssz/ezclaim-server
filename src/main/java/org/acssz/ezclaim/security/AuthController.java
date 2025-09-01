@@ -1,11 +1,9 @@
 package org.acssz.ezclaim.security;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -30,15 +28,14 @@ public class AuthController {
     // Hard-coded credentials (demo only)
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "ezclaim-password";
-    private static final Duration TTL = Duration.ofHours(12);
-
     private final JwtEncoder jwtEncoder;
+    private final org.acssz.ezclaim.config.JwtProperties jwtProps;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         if (USERNAME.equals(req.getUsername()) && PASSWORD.equals(req.getPassword())) {
             Instant now = Instant.now();
-            Instant exp = now.plus(TTL);
+            Instant exp = now.plus(jwtProps.getTtl());
 
             JwtClaimsSet claims = JwtClaimsSet.builder()
                     .issuer("ezclaim")

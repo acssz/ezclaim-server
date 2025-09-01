@@ -6,12 +6,14 @@ A Spring Boot service for managing claims with MongoDB storage, S3-compatible ob
 - Spring Boot 3.5.x (Java 21+/24 target)
 - MongoDB (Spring Data Mongo)
 - S3-compatible object storage via AWS SDK v2 (works with AWS S3, MinIO, etc.)
+- Messaging: Spring Cloud Stream + Kafka (Redpanda in dev)
+- Security: Spring Security OAuth2 Resource Server (JWT HS256)
 - Build: Maven Wrapper (`./mvnw`)
 - API tests: Bruno (`.bru` files under `bruno/`)
 
 ## Quick Start (Dev)
 1) Prereqs: Docker, Java 21+ (build is set to Java 24), optional direnv.
-2) Start dev services (MongoDB 8 + MinIO):
+2) Start dev services (MongoDB 8 + MinIO + Redpanda/Kafka):
    - `docker compose -f docker-compose.dev.yml up -d`
 3) Load project env (dev profile):
    - Install direnv, then in repo root: `direnv allow` (loads `.envrc` => `SPRING_PROFILES_ACTIVE=dev`).
@@ -44,6 +46,7 @@ Object Store (generic S3)
 
 Prod environment variables expected (see `application-prod.yml`):
 - `SPRING_DATA_MONGODB_URI`
+- `KAFKA_BOOTSTRAP_SERVERS`
 - `APP_OBJECTSTORE_ENDPOINT` (omit for AWS S3)
 - `APP_OBJECTSTORE_REGION`
 - `APP_OBJECTSTORE_ACCESS_KEY`
@@ -51,6 +54,9 @@ Prod environment variables expected (see `application-prod.yml`):
 - `APP_OBJECTSTORE_BUCKET`
 - `APP_OBJECTSTORE_PATH_STYLE`
 - `APP_OBJECTSTORE_ENSURE_BUCKET`
+- `APP_JWT_SECRET` (required for JWT HS256)
+- `APP_JWT_ALG` (optional, default `HS256`)
+- `APP_JWT_TTL` (optional, ISO-8601 duration, default `PT12H`)
 
 ## Domain & API
 Entities
@@ -75,11 +81,21 @@ Auth (for Audit Events)
 - Returns `{ token, tokenType: "Bearer", expiresAt }`
 - Include header `Authorization: Bearer <token>` for all `/api/audit-events/**` requests.
 
+Security notes
+- Uses standard JWT (HS256) via Spring Security OAuth2 Resource Server.
+- Dev secret and TTL are configured in `application-dev.yml` under `app.security.jwt.*`.
+- In prod, set `APP_JWT_SECRET` (and optionally `APP_JWT_TTL`). Plan for secret rotation and a shorter TTL.
+
 ## Bruno API Tests
 - Collection root: `bruno/`
 - Environments: `bruno/environments/dev.bru`, `bruno/environments/prod.bru` (uses `baseUrl`)
-- Requests grouped in `bruno/Tags`, `bruno/Photos`, `bruno/Claims`, `bruno/Audit Events`
+- Requests grouped in `bruno/Auth`, `bruno/Tags`, `bruno/Photos`, `bruno/Claims`, `bruno/Audit Events`
 - Open the `bruno/` folder in Bruno, choose an environment, then run tests in order (Auth → Tags → Photos → Claims → Audit Events). The Audit Events folder includes list, paginated list, filter example (with default variables), and get-by-id. The list/filter scripts capture the first event id to `{{auditEventId}}` for convenience.
+
+Audit Events pipeline
+- Change events are published to Kafka topic `audit.events` (binding `auditEvents-out-0`) by `MongoChangePublisher`.
+- The Consumer function `auditEvents` persists them to Mongo (binding `auditEvents-in-0`).
+- Dev uses Redpanda on `localhost:9092`; adjust `KAFKA_BOOTSTRAP_SERVERS` as needed.
 
 ## Build & Test
 - Unit tests: `./mvnw test`

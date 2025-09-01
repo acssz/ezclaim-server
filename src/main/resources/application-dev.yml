@@ -37,3 +37,9 @@ app:
     bucket: ezclaim-dev
     path-style: true
     ensure-bucket: true
+  security:
+    jwt:
+      # Dev-only secret; do NOT use in prod
+      secret: dev-jwt-secret-32-bytes-minimum-keep-local!
+      algorithm: HS256
+      ttl: PT12H
