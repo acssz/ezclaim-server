@@ -35,6 +35,27 @@ services:
       timeout: 5s
       retries: 5
 
+  minio-setup:
+    image: minio/mc:latest
+    container_name: ezclaim-minio-setup
+    depends_on:
+      - minio
+    restart: "no"
+    volumes:
+      - ./infra/minio/cors.json:/config/cors.json:ro
+    entrypoint: >
+      /bin/sh -c '
+      set -e; 
+      echo "Waiting for MinIO to be ready..."; 
+      until (mc alias set local http://minio:9000 ezclaim E2ClaimPass >/dev/null 2>&1); do 
+        sleep 3; 
+      done; 
+      echo "Ensuring bucket and applying CORS...";
+      mc mb -p local/ezclaim-dev || true; 
+      mc cors set local/ezclaim-dev /config/cors.json; 
+      echo "MinIO CORS configured for bucket ezclaim-dev"; 
+      '
+
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:latest
     container_name: ezclaim-redpanda-dev

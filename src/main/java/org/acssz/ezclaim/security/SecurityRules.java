@@ -9,6 +9,9 @@ public final class SecurityRules {
 
     public static void apply(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth
+            // Allow CORS preflight requests
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
             // OpenAPI & Swagger UI
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
