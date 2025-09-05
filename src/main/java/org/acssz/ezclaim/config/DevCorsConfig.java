@@ -2,7 +2,6 @@ package org.acssz.ezclaim.config;
 
 import java.time.Duration;
 import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,20 +13,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Profile("dev")
 public class DevCorsConfig {
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-        ));
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
-        cfg.setAllowedHeaders(List.of("*"));
-        cfg.setAllowCredentials(true);
-        cfg.setMaxAge(Duration.ofHours(1));
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration cfg = new CorsConfiguration();
+    cfg.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+    cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+    cfg.setAllowedHeaders(List.of("*"));
+    cfg.setAllowCredentials(true);
+    cfg.setMaxAge(Duration.ofHours(1));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", cfg);
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", cfg);
+    return source;
+  }
 }

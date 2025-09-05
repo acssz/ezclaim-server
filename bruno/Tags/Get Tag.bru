@@ -14,7 +14,7 @@ tests {
   test("should respond OK", function () {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("data should be correct", function () {
     expect(res.getBody().label).to.startWith("test");
     expect(res.getBody().color).to.equal("#FF0000");

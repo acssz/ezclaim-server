@@ -32,7 +32,7 @@ tests {
   test("should respond OK", function () {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("should include page metadata and respect size/page", function () {
     const b = res.getBody();
     const size = parseInt(bru.getVar("size"), 10);

@@ -21,7 +21,7 @@ tests {
   test("should respond OK", function () {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("content should change", function () {
     expect(res.getBody().color).to.equal("#00AAFF");
     expect(res.getBody().label).to.startWith("updated");

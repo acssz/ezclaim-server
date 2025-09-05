@@ -1,14 +1,12 @@
 package org.acssz.ezclaim.domain;
 
 import java.time.Instant;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @Builder
@@ -16,11 +14,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Document(collection = "photos")
 public class Photo {
-    @Id
-    private String id;
+  @Id private String id;
 
-    private String bucket;
-    private String key;
-    private Instant uploadedAt;
+  private String bucket;
+  private String key;
+  private Instant uploadedAt;
 }
-

@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class EzclaimApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(EzclaimApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(EzclaimApplication.class, args);
+  }
 }

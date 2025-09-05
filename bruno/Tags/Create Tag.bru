@@ -21,14 +21,14 @@ script:post-response {
   const tag = res.getBody()
   bru.setVar("tagId", tag.id)
   bru.setVar("tagLabel", tag.label)
-  
+
 }
 
 tests {
   test("should respond OK", function () {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("data should be correct", function () {
     expect(res.getBody().label).to.startWith("test");
     expect(res.getBody().color).to.equal("#FF0000");

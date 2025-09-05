@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PayoutInfo {
-    private String bankName;
-    private String accountNumber;
-    private String iban;
-    private String swift;
-    private String routingNumber;
-    private String bankAddress;
+  private String bankName;
+  private String accountNumber;
+  private String iban;
+  private String swift;
+  private String routingNumber;
+  private String bankAddress;
 }

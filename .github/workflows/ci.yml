@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '24'
+          cache: maven
+
+      - name: Run pre-commit (push-stage hooks)
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --hook-stage push
+
+      - name: Run unit tests
+        run: mvn -B -ntp -DskipITs test
