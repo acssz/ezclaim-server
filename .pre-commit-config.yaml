@@ -16,18 +16,18 @@ repos:
         entry: mvn -q -ntp spotless:apply
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
 
       - id: spotless-check
         name: Spotless Check (Maven)
         entry: mvn -q -ntp spotless:check
         language: system
         pass_filenames: false
-        stages: [push]
+        stages: [pre-push]
 
       - id: unit-tests
         name: Unit Tests (Maven)
         entry: mvn -q -ntp -DskipITs test
         language: system
         pass_filenames: false
-        stages: [push]
+        stages: [pre-push]
