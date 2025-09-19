@@ -7,5 +7,6 @@ public enum ClaimStatus {
   PAID, // admin: APPROVED -> PAID
   FINISHED, // accessible user: PAID -> FINISHED
   REJECTED, // admin: from any (except FINISHED, WITHDRAW) -> REJECTED
+  PAYMENT_FAILED, // admin: from APPROVED -> PAYMENT_FAILED
   WITHDRAW // accessible user: SUBMITTED -> WITHDRAW
 }

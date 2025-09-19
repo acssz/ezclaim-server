@@ -1,141 +1,68 @@
-# Ezclaim
+# EzClaim 管理后台
 
-A Spring Boot service for managing claims with MongoDB storage, S3-compatible object storage for photos, and a clean MVC/API structure. Includes Bruno API tests and dev tooling for quick startup.
+Next.js 14 构建的 EzClaim 管理端，提供管理员登录、标签管理、报销单审批以及审计事件查询等能力。后端接口基于项目根目录的 `api.json` (OpenAPI 3.1)。
 
-## Tech Stack
-- Spring Boot 3.5.x (Java 21+/24 target)
-- MongoDB (Spring Data Mongo)
-- S3-compatible object storage via AWS SDK v2 (works with AWS S3, MinIO, etc.)
-- Messaging: Spring Cloud Stream + Kafka (Redpanda in dev)
-- Security: Spring Security OAuth2 Resource Server (JWT HS256)
-- Build: Maven Wrapper (`./mvnw`)
-- API tests: Bruno (`.bru` files under `bruno/`)
+## 功能亮点
 
-## Quick Start (Dev)
-1) Prereqs: Docker, Java 21+ (build is set to Java 24), optional direnv.
-2) Start dev services (MongoDB 8 + MinIO + Redpanda/Kafka):
-   - `docker compose -f docker-compose.dev.yml up -d`
-3) Load project env (dev profile):
-   - Install direnv, then in repo root: `direnv allow` (loads `.envrc` => `SPRING_PROFILES_ACTIVE=dev`).
-4) Run the app:
-   - `./mvnw spring-boot:run`
+- 🔐 管理员登录，使用 JWT 存储于 HttpOnly Cookie
+- 🏷️ 标签管理：创建、查看、删除标签
+- 💼 报销单管理：支持搜索、筛选、排序，状态流转遵守服务端规则
+- 📊 实时概览：按状态统计报销单数量
+- 🛠️ 审计事件查询：多条件过滤、分页展示、详细 JSON 查看
 
-Dev URLs
-- API base: `http://localhost:8080`
-- MinIO Console: `http://localhost:9001`
-- S3 endpoint: `http://localhost:9000`
-- Mongo: `mongodb://...` from `application-dev.yml`
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
- - OpenAPI YAML: `http://localhost:8080/v3/api-docs.yaml`
+## 快速开始
 
-Generate static OpenAPI YAML
-- Start the app locally on port 8080, then run:
-  - `./mvnw -Popenapi -DskipTests springdoc-openapi:generate`
-- Output: `target/openapi.yaml`
+```bash
+npm install
+npm run dev
+```
 
-## Configuration
-Spring profiles are used to separate dev and prod configuration:
-- `src/main/resources/application-dev.yml` (local dev)
-- `src/main/resources/application-prod.yml` (deployment)
+默认后端地址为 `http://localhost:8080`，如需修改可在启动前设置：
 
-Mongo (dev)
-- `spring.data.mongodb.uri=mongodb://ezclaim:E2Claim@localhost:27017/ezclaim?authSource=admin`
-  - If authentication fails, clear the docker volume or align the URI with the existing root user in your volume.
+```bash
+export API_BASE_URL="http://your-backend:8080"
+```
 
-Object Store (generic S3)
-- Properties prefix: `app.objectstore.*`
-  - `endpoint`: omit for AWS S3; set to `http://localhost:9000` for MinIO dev
-  - `region`: e.g. `us-east-1`
-  - `access-key`, `secret-key`: credentials
-  - `bucket`: default bucket name
-  - `path-style`: `true` for S3-compatible services like MinIO
-  - `ensure-bucket`: set `true` in dev to auto-create; keep `false` in prod
+或在 `.env.local` 中声明 `API_BASE_URL`/`NEXT_PUBLIC_API_BASE_URL`。
 
-Prod environment variables expected (see `application-prod.yml`):
-- `SPRING_DATA_MONGODB_URI`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `APP_OBJECTSTORE_ENDPOINT` (omit for AWS S3)
-- `APP_OBJECTSTORE_REGION`
-- `APP_OBJECTSTORE_ACCESS_KEY`
-- `APP_OBJECTSTORE_SECRET_KEY`
-- `APP_OBJECTSTORE_BUCKET`
-- `APP_OBJECTSTORE_PATH_STYLE`
-- `APP_OBJECTSTORE_ENSURE_BUCKET`
-- `APP_JWT_SECRET` (required for JWT HS256)
-- `APP_JWT_ALG` (optional, default `HS256`)
-- `APP_JWT_TTL` (optional, ISO-8601 duration, default `PT12H`)
+## 运行前提
 
-## Domain & API
-Entities
-- Claim: `title`, `description`, `status`, `createdAt`, `updatedAt`, references to `photos[]`, `tags[]` (stored separately)
-- Photo: `bucket`, `key`, `uploadedAt` (S3 metadata)
-- Tag: `label`, `color`
+- Node.js 18+
+- 后端服务（默认端口 8080，可通过 `api.json` 查看接口定义）
+- Demo 账户：`admin / ezclaim-password` 或 `reader / reader-pass`
 
-Key Endpoints (REST)
-- Tags: `GET/POST/PUT/DELETE /api/tags[/id]`
-- Photos:
-  - `POST /api/photos/presign-upload` → returns presigned PUT URL
-  - `POST /api/photos` → create a Photo record (after you upload)
-  - `GET /api/photos/{id}/download-url` → presigned GET URL
-  - `GET/DELETE /api/photos[/id]`
-- Claims: `GET/POST/PUT/DELETE /api/claims[/id]` (accepts `photoIds[]` and `tagIds[]`)
- - Audit Events:
-   - `GET /api/audit-events` (filters: `entityType`, `entityId`, `action`, `from`, `to`; paging `page`, `size`; sorting `sort=field,asc|desc`)
-   - `GET /api/audit-events/{id}`
+## 脚本
 
-Auth (for Audit Events)
-- `POST /api/auth/login` with JSON `{ "username": "admin", "password": "ezclaim-password" }`
-- Returns `{ token, tokenType: "Bearer", expiresAt }`
-- Include header `Authorization: Bearer <token>` for all `/api/audit-events/**` requests.
+| 命令         | 说明                 |
+| ------------ | -------------------- |
+| `npm run dev`   | 开发模式 (`localhost:3000`) |
+| `npm run build` | 生产构建            |
+| `npm run start` | 启动生产环境服务器  |
+| `npm run lint`  | 执行 ESLint 检查    |
 
-Security notes
-- Uses standard JWT (HS256) via Spring Security OAuth2 Resource Server.
-- Dev secret and TTL are configured in `application-dev.yml` under `app.security.jwt.*`.
-- In prod, set `APP_JWT_SECRET` (and optionally `APP_JWT_TTL`). Plan for secret rotation and a shorter TTL.
+## 目录结构
 
-Built-in Users (in-memory)
-- Anonymous (no token):
-  - Can read claims: `GET /api/claims`, `GET /api/claims/{id}` (response includes related photos/tags).
-- `reader` / `reader-pass`:
-  - Scopes: `AUDIT`, `TAG_READ`, `PHOTO_READ`, `CLAIM_READ`
-  - Can: read audit events; read tags; read photos; read all claims.
-- `admin` / `ezclaim-password`:
-  - Scopes: all of reader plus `CLAIM_WRITE`, `TAG_WRITE`, `PHOTO_DELETE`, `PHOTO_WRITE`
-  - Can: update/create/delete claims; CRUD tags; delete photos; presign upload & create photo record.
+```
+app/                 # App Router 路由
+  (auth)/login       # 登录页
+  (dashboard)/       # 受保护的业务页面
+components/          # UI 组件与布局
+lib/                 # API 客户端、配置、工具函数
+middleware.ts        # 保护路由的中间件
+```
 
-Endpoint Authorization Summary
-- Audit: `/api/audit-events/**` → requires `SCOPE_AUDIT`
-- Claims:
-  - `GET /api/claims` → `SCOPE_CLAIM_READ`
-  - `GET /api/claims/{id}` → public
-  - `POST/PUT/DELETE /api/claims[/id]` → `SCOPE_CLAIM_WRITE`
-- Tags:
-  - `GET /api/tags[/id]` → `SCOPE_TAG_READ`
-  - `POST/PUT/DELETE /api/tags[/id]` → `SCOPE_TAG_WRITE`
-- Photos:
-  - `GET /api/photos[/id]`, `GET /api/photos/{id}/download-url` → `SCOPE_PHOTO_READ`
-  - `DELETE /api/photos/{id}` → `SCOPE_PHOTO_DELETE`
-  - `POST /api/photos/presign-upload`, `POST /api/photos` → `SCOPE_PHOTO_WRITE`
+## 认证机制
 
-## Bruno API Tests
-- Collection root: `bruno/`
-- Environments: `bruno/environments/dev.bru`, `bruno/environments/prod.bru` (uses `baseUrl`)
-- Requests grouped in `bruno/Auth`, `bruno/Tags`, `bruno/Photos`, `bruno/Claims`, `bruno/Audit Events`
-- Open the `bruno/` folder in Bruno, choose an environment, then run tests in order (Auth → Tags → Photos → Claims → Audit Events). The Audit Events folder includes list, paginated list, filter example (with default variables), and get-by-id. The list/filter scripts capture the first event id to `{{auditEventId}}` for convenience.
+- 登录后通过服务端调用 `/api/auth/login` 获取 JWT
+- Token 以 HttpOnly Cookie (`ezclaim_token`) 形式存储
+- `middleware.ts` 拦截未登录访问并重定向至 `/login`
 
-Audit Events pipeline
-- Change events are published to Kafka topic `audit.events` (binding `auditEvents-out-0`) by `MongoChangePublisher`.
-- The Consumer function `auditEvents` persists them to Mongo (binding `auditEvents-in-0`).
-- Dev uses Redpanda on `localhost:9092`; adjust `KAFKA_BOOTSTRAP_SERVERS` as needed.
+## 注意事项
 
-## Build & Test
-- Unit tests: `./mvnw test`
-- Package: `./mvnw -DskipTests package`
+- 所有与后端交互的操作使用 Next.js Server Actions，并在成功后 `router.refresh()` + `revalidatePath`
+- 报销单状态流转遵循后端 `ClaimService` 的约束：
+  - `SUBMITTED → APPROVED/REJECTED`
+  - `APPROVED → PAID/REJECTED`
+- `Audit Events` 页面采用 GET 参数驱动，可直接分享链接复现查询条件
 
-## Notes
-- If the app starts before MinIO, bucket provisioning waits up to ~60s with retries.
-- For Mongo auth errors in dev, the most common cause is a reused volume created with different credentials; reset the volume or align the URI.
-
-## License
-This project is licensed under the WTFPL. See `LICENCE` for details.
+欢迎根据业务需要扩展更多管理能力，例如报销单详情编辑、批量操作等。

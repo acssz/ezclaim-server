@@ -164,7 +164,8 @@ public class ClaimService {
       return from != ClaimStatus.FINISHED && from != ClaimStatus.WITHDRAW;
     }
     return (from == ClaimStatus.SUBMITTED && to == ClaimStatus.APPROVED)
-        || (from == ClaimStatus.APPROVED && to == ClaimStatus.PAID);
+        || (from == ClaimStatus.APPROVED
+            && (to == ClaimStatus.PAID || to == ClaimStatus.PAYMENT_FAILED));
   }
 
   private boolean isUserTransitionAllowed(ClaimStatus from, ClaimStatus to) {
