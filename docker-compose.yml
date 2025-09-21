@@ -1,0 +1,137 @@
+services:
+  mongo:
+    image: mongo:8.0
+    container_name: ezclaim-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-ezclaim}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: ezclaim-redpanda
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "4902:9092"
+      - "4644:9644"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://127.0.0.1:9644/v1/status/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - backend
+
+  minio:
+    image: minio/minio:latest
+    container_name: ezclaim-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ezclaim}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "4900:9000"
+      - "4901:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  minio-setup:
+    image: minio/mc:latest
+    container_name: ezclaim-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ezclaim}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      APP_OBJECTSTORE_BUCKET: ${APP_OBJECTSTORE_BUCKET:-ezclaim-prod}
+    entrypoint: >
+      /bin/sh -c '
+        set -euo pipefail;
+        mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD";
+        mc mb -p local/"$APP_OBJECTSTORE_BUCKET" || true;
+      '
+    networks:
+      - backend
+
+  ezclaim:
+    image: eclipse-temurin:24-jre
+    container_name: ezclaim-app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    working_dir: /app
+    command: ["java", "-jar", "/app/ezclaim-server.jar"]
+    volumes:
+      - ./target/ezclaim-server.jar:/app/ezclaim-server.jar:ro
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-ezclaim}:${MONGO_ROOT_PASSWORD}@mongo:27017/ezclaim?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      APP_OBJECTSTORE_ENDPOINT: https://ezclaim-static.liuzisen.com
+      APP_OBJECTSTORE_REGION: ${APP_OBJECTSTORE_REGION:-us-east-1}
+      APP_OBJECTSTORE_ACCESS_KEY: ${MINIO_ROOT_USER:-ezclaim}
+      APP_OBJECTSTORE_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      APP_OBJECTSTORE_BUCKET: ${APP_OBJECTSTORE_BUCKET:-ezclaim-prod}
+      APP_OBJECTSTORE_PATH_STYLE: "true"
+      APP_OBJECTSTORE_ENSURE_BUCKET: "false"
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_JWT_TTL: ${APP_JWT_TTL:-PT12H}
+    ports:
+      - "4080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  mongo_data:
+  minio_data:
+
+networks:
+  backend:
+    driver: bridge

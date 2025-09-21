@@ -1,4 +1,6 @@
 spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   data:
     mongodb:
       # Root user authenticates against the admin database
@@ -28,6 +30,14 @@ spring:
           content-type: application/json
 
 app:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://127.0.0.1:3000
+      - http://localhost:3001
+      - http://127.0.0.1:3001
+      - https://ezclaim-web.liuzisen.com
+      - https://ezclaim-admin.liuzisen.com
   objectstore:
     # For local dev against S3-compatible (Compose MinIO)
     endpoint: http://localhost:9000

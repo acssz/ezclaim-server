@@ -1,4 +1,6 @@
 spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
   data:
     mongodb:
       # Provide as environment variable in deployment
@@ -28,6 +30,11 @@ spring:
           content-type: application/json
 
 app:
+  cors:
+    allowed-origins:
+      - https://ezclaim.liuzisen.com
+      - https://ezclaim-web.liuzisen.com
+      - https://ezclaim-admin.liuzisen.com
   objectstore:
     # Leave endpoint unset for AWS S3; set to https://host:port for S3-compatible
     endpoint: ${APP_OBJECTSTORE_ENDPOINT:}
