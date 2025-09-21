@@ -17,6 +17,8 @@ public class DevCorsConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration cfg = new CorsConfiguration();
     cfg.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+    cfg.setAllowedOrigins(List.of("http://localhost:3001", "http://127.0.0.1:3001"));
+    cfg.setAllowedOrigins(List.of("https://ezclaim-web.liuzisen.com", "https://ezclaim-admin.liuzisen.com"));
     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
     cfg.setAllowedHeaders(List.of("*"));
     cfg.setAllowCredentials(true);
