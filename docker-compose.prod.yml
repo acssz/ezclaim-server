@@ -1,0 +1,76 @@
+services:
+  app:
+    image: rabbull/ezclaim-server:0.0.1-snapshot
+    container_name: ezclaim-server-app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATA_MONGODB_URI: mongodb://ezclaim:E2ClaimPass@mongo:27017/ezclaim?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      APP_OBJECTSTORE_ENDPOINT: https://storage.googleapis.com
+      APP_OBJECTSTORE_REGION: auto
+      APP_OBJECTSTORE_BUCKET: ezclaim
+      APP_OBJECTSTORE_ACCESS_KEY: changeme
+      APP_OBJECTSTORE_SECRET_KEY: changeme
+      APP_OBJECTSTORE_PATH_STYLE: false
+      APP_OBJECTSTORE_ENSURE_BUCKET: false
+      APP_JWT_SECRET: changeme
+      APP_JWT_ALG: HS256
+      APP_JWT_TTL: PT12H
+
+  mongo:
+    image: mongo:8.0
+    container_name: ezclaim-server-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ezclaim
+      MONGO_INITDB_ROOT_PASSWORD: E2ClaimPass
+    volumes:
+      - /mnt/ezclaim/ezclaim-server/mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: ezclaim-server-redpanda
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    volumes:
+      - /mnt/ezclaim/ezclaim-server/redpanda:/var/lib/redpanda/data
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --memory
+      - 2G
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:9644/v1/status/ready >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

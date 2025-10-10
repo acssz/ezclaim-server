@@ -1,0 +1,3 @@
+# Keep actual prod env files out of version control.
+*.env
+

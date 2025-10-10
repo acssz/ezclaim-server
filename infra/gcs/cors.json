@@ -1,0 +1,8 @@
+[
+    {
+      "origin": ["https://claim.acssz.org", "https://claim-admin.acssz.org"],
+      "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
+      "responseHeader": ["Content-Type"],
+      "maxAgeSeconds": 3600
+    }
+]
